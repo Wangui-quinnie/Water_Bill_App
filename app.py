@@ -4,7 +4,7 @@ from mysql.connector import Error
 import datetime
 from flask import send_file
 from io import BytesIO
-import pdfkit  # Ensure you have wkhtmltopdf installed for pdfkit to work
+from weasyprint import HTML  
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -139,3 +139,47 @@ def generate_invoice(unit):
     amount_due = usage * WATER_RATE_PER_UNIT
 
     return render_template("invoice.html", tenant=tenant, usage=usage, bill=amount_due, currency=CURRENCY_SYMBOL)
+
+# Adds route `/invoice/<unit>/pdf` to generate and serve invoice as a PDF
+# Retrieves tenant data from the database based on unit number
+# Calculates water usage and total bill
+# Renders the invoice HTML using Flask and converts it to PDF using WeasyPrint
+# Sends the generated PDF as a downloadable file using Flask's `send_file`
+# Handles missing tenants with flash messaging and redirection
+
+from flask import send_file
+from io import BytesIO
+from weasyprint import HTML
+
+@app.route("/invoice/<unit>/pdf")
+def download_invoice_pdf(unit):
+    # Connect to DB and fetch tenant info
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tenants WHERE unit_number = %s", (unit,))
+    tenant = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not tenant:
+        flash("Tenant not found", "danger")
+        return redirect(url_for("view_tenants"))
+
+    # Calculate usage and bill
+    usage = tenant['current_reading'] - tenant['previous_reading']
+    amount_due = usage * WATER_RATE_PER_UNIT
+
+    # Render HTML invoice from template
+    rendered_html = render_template("invoice.html",
+        tenant=tenant,
+        usage=usage,
+        bill=amount_due,
+        currency=CURRENCY_SYMBOL,
+        now=datetime.datetime.now
+    )
+
+    # Convert HTML to PDF using WeasyPrint
+    pdf = HTML(string=rendered_html).write_pdf()
+
+    # Send PDF file to browser
+    return send_file(BytesIO(pdf), download_name=f"Invoice_{unit}.pdf", as_attachment=True)

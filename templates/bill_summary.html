@@ -1,0 +1,23 @@
+<!--
+- Iterates over generated bills and displays details per tenant
+- Shows unit number, meter, previous/current readings, usage, and total bill
+- Includes styled layout using Tailwind CSS for readability
+- Provides navigation link back to the home page
+-->
+{% extends "layout.html" %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Water Bill Summary</h1>
+
+{% for bill in bills %}
+<div class="bg-white shadow-md rounded p-4 mb-4">
+    <h2 class="text-xl font-semibold mb-2">Unit {{ bill.unit }}</h2>
+    <p>Meter: {{ bill.meter }}</p>
+    <p>Previous Reading: {{ bill.previous }}</p>
+    <p>Current Reading: {{ bill.current }}</p>
+    <p>Usage: {{ bill.usage }} units</p>
+    <p class="text-lg font-bold text-blue-700">Amount Due: {{ currency }}{{ "%.2f"|format(bill.bill) }}</p>
+</div>
+{% endfor %}
+<a href="{{ url_for('index') }}" class="inline-block mt-6 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Back to Home</a>
+{% endblock %}

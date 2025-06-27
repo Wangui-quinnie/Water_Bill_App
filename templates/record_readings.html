@@ -1,0 +1,27 @@
+<!-- 
+- Displays a form listing all tenants with previous readings
+- Accepts current readings for each unit with input validation (min = previous)
+- Styled using Tailwind CSS for clean layout and usability
+- Submits readings to generate corresponding water bills
+-->
+{% extends "layout.html" %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Record Meter Readings</h1>
+<form method="POST" class="space-y-4">
+    {% for tenant in tenants %}
+    <div class="bg-white shadow rounded p-4">
+        <h2 class="text-lg font-semibold mb-2">Unit {{ tenant.unit_number }}</h2>
+        <p>Previous Reading: <strong>{{ tenant.previous_reading }}</strong></p>
+        <label class="block mt-2 text-sm font-medium">Current Reading</label>
+        <input type="number" name="reading_{{ tenant.unit_number }}" required
+               min="{{ tenant.previous_reading }}"
+               class="mt-1 w-full p-2 border rounded"
+               placeholder="Enter new reading">
+    </div>
+    {% endfor %}
+    <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+        Submit Readings & Generate Bills
+    </button>
+</form>
+{% endblock %}

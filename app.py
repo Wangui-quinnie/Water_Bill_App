@@ -11,8 +11,8 @@ app.secret_key = "supersecretkey"
 
 DB_CONFIG = {
     'host': 'localhost',
-    'user': 'root',
-    'password': 'KuiMaina1',
+    'user': 'username',
+    'password': 'your password',
     'database': 'rental_management'
 }
 

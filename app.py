@@ -55,3 +55,59 @@ def add_tenant():
             conn.close()
         return redirect(url_for("view_tenants"))
     return render_template("add_tenant.html")
+
+# Handles GET and POST methods for /record-readings
+# Retrieves tenant data and processes new readings from the form
+# Validates that current reading is not less than the previous
+# Calculates usage and bill amount per tenant
+# Updates readings in the database
+# Displays a bill summary after successful submission
+# Includes flash message feedback for errors and validation
+
+@app.route("/record-readings", methods=["GET", "POST"])
+def record_readings():
+    tenants = load_tenants()
+
+    if request.method == "POST":
+        updates = []
+        bills = []
+        for tenant in tenants:
+            unit = tenant["unit_number"]
+            prev = tenant["previous_reading"]
+            current = int(request.form.get(f"reading_{unit}", prev))
+
+            if current < prev:
+                flash(f"Error for Unit {unit}: current reading cannot be less than previous.", "danger")
+                return redirect(url_for("record_readings"))
+
+            usage = current - prev
+            bill = usage * WATER_RATE_PER_UNIT  # no base fee in your code
+            updates.append((current, current, unit))
+            bills.append({
+                "unit": unit,
+                "meter": tenant["meter_number"],
+                "previous": prev,
+                "current": current,
+                "usage": usage,
+                "bill": bill
+            })
+
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            for new_prev, new_curr, unit in updates:
+                cursor.execute("""
+                    UPDATE tenants
+                    SET previous_reading = %s, current_reading = %s
+                    WHERE unit_number = %s
+                """, (new_prev, new_curr, unit))
+            conn.commit()
+            cursor.close()
+            conn.close()
+        except Error as e:
+            flash(f"Database update failed: {e}", "danger")
+            return redirect(url_for("record_readings"))
+
+        return render_template("bill_summary.html", bills=bills, currency=CURRENCY_SYMBOL)
+
+    return render_template("record_readings.html", tenants=tenants)

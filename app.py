@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import mysql.connector
 from mysql.connector import Error
 import datetime
+from flask import send_file
+from io import BytesIO
+import pdfkit  # Ensure you have wkhtmltopdf installed for pdfkit to work
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -111,3 +114,28 @@ def record_readings():
         return render_template("bill_summary.html", bills=bills, currency=CURRENCY_SYMBOL)
 
     return render_template("record_readings.html", tenants=tenants)
+
+
+# Fetches tenant data from the database based on unit number
+# Calculates water usage and total amount due
+# Renders invoice template with billing details
+# Includes error handling for non-existent tenants with flash messaging
+# Prepares for potential PDF generation with tools like pdfkit or WeasyPrint
+@app.route("/invoice/<unit>")
+def generate_invoice(unit):
+    # Fetch tenant data
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tenants WHERE unit_number = %s", (unit,))
+    tenant = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not tenant:
+        flash("Tenant not found", "danger")
+        return redirect(url_for("view_tenants"))
+
+    usage = tenant['current_reading'] - tenant['previous_reading']
+    amount_due = usage * WATER_RATE_PER_UNIT
+
+    return render_template("invoice.html", tenant=tenant, usage=usage, bill=amount_due, currency=CURRENCY_SYMBOL)

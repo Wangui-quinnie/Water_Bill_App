@@ -6,51 +6,26 @@
 - Uses current date as billing date via `now().strftime('%Y-%m-%d')`
 -->
 {% extends "layout.html" %}
-
 {% block content %}
-<div class="bg-white shadow-md rounded p-6 max-w-2xl mx-auto text-gray-800">
-    <h1 class="text-2xl font-bold mb-2">WATER BILL INVOICE</h1>
-    <p class="text-sm text-gray-500 mb-4">Billing Date: {{ now().strftime('%Y-%m-%d') }}</p>
+<div class="max-w-2xl mx-auto bg-white p-6 rounded shadow text-gray-800">
+    <h1 class="text-2xl font-bold">Water Bill Invoice</h1>
+    <p class="text-sm text-gray-500 mb-4">Date: {{ now().strftime('%Y-%m-%d') }}</p>
 
-    <div class="mb-6">
+    <div class="mb-4">
         <p><strong>Unit:</strong> {{ tenant.unit_number }}</p>
-        <p><strong>Meter Number:</strong> {{ tenant.meter_number }}</p>
+        <p><strong>Meter No.:</strong> {{ tenant.meter_number }}</p>
     </div>
 
-    <table class="w-full border-collapse mb-4">
-        <thead>
-            <tr class="bg-gray-200 text-left">
-                <th class="border px-4 py-2">Description</th>
-                <th class="border px-4 py-2">Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="border px-4 py-2">Previous Reading</td>
-                <td class="border px-4 py-2">{{ tenant.previous_reading }}</td>
-            </tr>
-            <tr>
-                <td class="border px-4 py-2">Current Reading</td>
-                <td class="border px-4 py-2">{{ tenant.current_reading }}</td>
-            </tr>
-            <tr>
-                <td class="border px-4 py-2">Usage (units)</td>
-                <td class="border px-4 py-2">{{ usage }}</td>
-            </tr>
-            <tr class="font-bold">
-                <td class="border px-4 py-2">Total Due</td>
-                <td class="border px-4 py-2">{{ currency }}{{ "%.2f"|format(bill) }}</td>
-            </tr>
-        </tbody>
+    <table class="w-full text-sm border border-gray-300 mb-4">
+        <tr><td class="border px-4 py-2">Previous Reading</td><td class="border px-4 py-2">{{ tenant.previous_reading }}</td></tr>
+        <tr><td class="border px-4 py-2">Current Reading</td><td class="border px-4 py-2">{{ tenant.current_reading }}</td></tr>
+        <tr><td class="border px-4 py-2">Usage</td><td class="border px-4 py-2">{{ usage }} units</td></tr>
+        <tr class="font-bold bg-gray-100"><td class="border px-4 py-2">Total Due</td><td class="border px-4 py-2">{{ currency }}{{ "%.2f"|format(bill) }}</td></tr>
     </table>
 
     <div class="flex justify-between">
-        <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-            Print Invoice
-        </button>
-        <a href="{{ url_for('download_invoice_pdf', unit=tenant.unit_number) }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-            Download PDF
-        </a>
+        <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Print</button>
+        <a href="{{ url_for('download_invoice_pdf', unit=tenant.unit_number) }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Download PDF</a>
     </div>
 </div>
 {% endblock %}
